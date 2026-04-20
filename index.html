@@ -6,9 +6,435 @@
 <title>VAPORA — Cigarettes Électroniques Premium</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="stylesheet.css">
-<script src="javascript.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════
+   AUTH MODAL — Système de connexion / inscription
+═══════════════════════════════════════════════════ */
+
+/* Overlay sombre */
+#auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+#auth-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Carte centrale */
+.auth-card {
+  background: #111118;
+  border: 1px solid rgba(0,229,255,0.15);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 440px;
+  padding: 40px;
+  position: relative;
+  box-shadow: 0 0 80px rgba(0,229,255,0.08), 0 40px 80px rgba(0,0,0,0.6);
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+#auth-overlay.open .auth-card {
+  transform: translateY(0) scale(1);
+}
+
+/* Croix fermeture */
+.auth-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  width: 34px; height: 34px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  background: none;
+  color: #6b6b80;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.auth-close:hover { color: #e8e8f0; border-color: rgba(255,255,255,0.2); }
+
+/* Logo dans le modal */
+.auth-logo {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 2rem;
+  letter-spacing: 4px;
+  background: linear-gradient(135deg, #00e5ff, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4px;
+}
+
+.auth-subtitle {
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #6b6b80;
+  font-family: 'Space Mono', monospace;
+  margin-bottom: 28px;
+}
+
+/* Onglets Connexion / Inscription */
+.auth-tabs {
+  display: flex;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 28px;
+  gap: 4px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: #6b6b80;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.3px;
+}
+
+.auth-tab.active {
+  background: linear-gradient(135deg, rgba(0,229,255,0.15), rgba(124,58,237,0.15));
+  color: #00e5ff;
+  border: 1px solid rgba(0,229,255,0.2);
+}
+
+/* Panneau formulaire */
+.auth-panel { display: none; }
+.auth-panel.active { display: block; }
+
+/* Champs */
+.auth-field {
+  margin-bottom: 16px;
+}
+
+.auth-field label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #6b6b80;
+  margin-bottom: 7px;
+  font-family: 'Space Mono', monospace;
+}
+
+.auth-field input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #e8e8f0;
+  font-size: 0.9rem;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.auth-field input:focus {
+  border-color: rgba(0,229,255,0.4);
+  background: rgba(0,229,255,0.04);
+}
+
+.auth-field input::placeholder { color: #3a3a4a; }
+
+/* Grille 2 colonnes */
+.auth-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Bouton principal */
+.auth-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #00e5ff, #00b4d8);
+  border: none;
+  border-radius: 10px;
+  color: #000;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.5px;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.auth-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,229,255,0.35); }
+.auth-btn:hover::after { opacity: 1; }
+.auth-btn:active { transform: translateY(0); }
+.auth-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Message d'erreur / succès */
+.auth-msg {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  font-family: 'Space Mono', monospace;
+  padding: 10px 14px;
+  border-radius: 8px;
+  display: none;
+}
+
+.auth-msg.error {
+  display: block;
+  background: rgba(248,113,113,0.08);
+  border: 1px solid rgba(248,113,113,0.2);
+  color: #f87171;
+}
+
+.auth-msg.success {
+  display: block;
+  background: rgba(74,222,128,0.08);
+  border: 1px solid rgba(74,222,128,0.2);
+  color: #4ade80;
+}
+
+/* Séparateur +18 */
+.auth-legal {
+  margin-top: 16px;
+  font-size: 0.72rem;
+  color: #3a3a4a;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  line-height: 1.5;
+}
+
+/* Lien oublié mot de passe */
+.auth-forgot {
+  font-size: 0.75rem;
+  color: #6b6b80;
+  text-align: right;
+  margin-top: -8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  transition: color 0.2s;
+}
+.auth-forgot:hover { color: #00e5ff; }
+
+/* ── Bouton "Mon compte" dans la top-bar ─────────── */
+#compte-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #e8e8f0;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+#compte-btn:hover { border-color: rgba(0,229,255,0.4); color: #00e5ff; }
+
+/* Avatar connecté */
+#compte-btn .avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00e5ff, #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #000;
+  flex-shrink: 0;
+}
+
+/* Menu déroulant compte */
+.compte-dropdown {
+  position: relative;
+}
+
+.compte-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #111118;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 8px;
+  min-width: 180px;
+  z-index: 300;
+  display: none;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.compte-menu.open { display: block; }
+
+.compte-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #6b6b80;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.compte-menu-item:hover { background: rgba(255,255,255,0.05); color: #e8e8f0; }
+.compte-menu-item.danger:hover { color: #f87171; }
+
+.compte-menu-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 4px 0;
+}
+
+/* Loader dans bouton */
+.auth-loader {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Indicateur connecté dans sidebar */
+.sidebar-user {
+  padding: 16px 28px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  display: none;
+}
+
+.sidebar-user.visible { display: flex; align-items: center; gap: 12px; }
+
+.sidebar-user .s-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00e5ff, #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.85rem; color: #000;
+  flex-shrink: 0;
+}
+
+.sidebar-user .s-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e8e8f0;
+}
+.sidebar-user .s-role {
+  font-size: 0.65rem;
+  color: #00e5ff;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-family: 'Space Mono', monospace;
+}
+</style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL AUTHENTIFICATION
+═══════════════════════════════════════════════════ -->
+<div id="auth-overlay" onclick="closeAuthOnOverlay(event)">
+  <div class="auth-card">
+    <button class="auth-close" onclick="closeAuth()">✕</button>
+
+    <div class="auth-logo">SHiesty</div>
+    <div class="auth-subtitle">Premium Vape Store — Espace Client</div>
+
+    <!-- Onglets -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login', this)">Connexion</button>
+      <button class="auth-tab" onclick="switchAuthTab('register', this)">Inscription</button>
+    </div>
+
+    <!-- PANEL CONNEXION -->
+    <div class="auth-panel active" id="auth-login">
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="votre@email.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label>Mot de passe</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <div class="auth-forgot">Mot de passe oublié ?</div>
+      <button class="auth-btn" id="login-btn" onclick="doLogin()">Se connecter →</button>
+      <div class="auth-msg" id="login-msg"></div>
+    </div>
+
+    <!-- PANEL INSCRIPTION -->
+    <div class="auth-panel" id="auth-register">
+      <div class="auth-grid-2">
+        <div class="auth-field">
+          <label>Prénom</label>
+          <input type="text" id="reg-prenom" placeholder="Moussa" autocomplete="given-name">
+        </div>
+        <div class="auth-field">
+          <label>Nom</label>
+          <input type="text" id="reg-nom" placeholder="Diallo" autocomplete="family-name">
+        </div>
+      </div>
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="votre@email.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label>Mot de passe</label>
+        <input type="password" id="reg-password" placeholder="8 caractères minimum" autocomplete="new-password">
+      </div>
+      <div class="auth-field">
+        <label>Date de naissance <span style="color:#ff6b35;">(+18 requis)</span></label>
+        <input type="date" id="reg-naissance" max="">
+      </div>
+      <div class="auth-field">
+        <label>Téléphone <span style="color:#3a3a4a;">(facultatif)</span></label>
+        <input type="tel" id="reg-tel" placeholder="+221 77 000 00 00">
+      </div>
+      <button class="auth-btn" id="register-btn" onclick="doRegister()">Créer mon compte →</button>
+      <div class="auth-msg" id="register-msg"></div>
+      <div class="auth-legal">⚠️ En vous inscrivant, vous confirmez avoir +18 ans.<br>La nicotine est une substance addictive.</div>
+    </div>
+  </div>
+</div>
 
 <!-- SIDEBAR -->
 <nav id="sidebar">
@@ -17,40 +443,37 @@
     <p>Premium Vape Store</p>
   </div>
 
+  <!-- Bloc utilisateur connecté dans la sidebar -->
+  <div class="sidebar-user" id="sidebar-user">
+    <div class="s-avatar" id="sidebar-avatar">?</div>
+    <div>
+      <div class="s-name" id="sidebar-name">—</div>
+      <div class="s-role">Client</div>
+    </div>
+  </div>
+
   <div class="sidebar-nav">
     <div class="nav-section-label">Navigation</div>
-
     <button class="nav-item active" onclick="showPage('home', this)">
-      <span class="nav-icon">🏠</span>
-      Accueil
+      <span class="nav-icon">🏠</span> Accueil
     </button>
-
     <button class="nav-item" onclick="showPage('address', this)">
-      <span class="nav-icon">📍</span>
-      Adresse & Horaires
+      <span class="nav-icon">📍</span> Adresse & Horaires
     </button>
-
     <button class="nav-item" onclick="showPage('info', this)">
-      <span class="nav-icon">ℹ️</span>
-      Informations
+      <span class="nav-icon">ℹ️</span> Informations
     </button>
-
     <button class="nav-item" onclick="showPage('contact', this)">
-      <span class="nav-icon">✉️</span>
-      Contact
+      <span class="nav-icon">✉️</span> Contact
     </button>
-
     <div class="nav-section-label" style="margin-top:24px;">Boutique</div>
-
-    <button class="nav-item" onclick="showPage('payment', this)">
-      <span class="nav-icon">💳</span>
-      Paiement & Panier
+    <button class="nav-item" onclick="showPage('payment', document.querySelector('[onclick*=payment]'))">
+      <span class="nav-icon">💳</span> Paiement & Panier
     </button>
   </div>
 
   <div class="sidebar-footer">
-    © 2025 VAPORA<br>
-    +18 Seulement
+    © 2025 VAPORA<br>+18 Seulement
   </div>
 </nav>
 
@@ -71,8 +494,21 @@
     <span class="top-bar-title" id="page-title">Accueil</span>
     <div class="top-bar-actions">
       <button class="cart-btn" onclick="showPage('payment', document.querySelector('[onclick*=payment]'))">
-        🛒 Panier <span id="cart-count" style="background:rgba(255,255,255,0.2);border-radius:20px;padding:1px 8px;font-size:0.8rem;">3</span>
+        🛒 Panier <span id="cart-count" style="background:rgba(255,255,255,0.2);border-radius:20px;padding:1px 8px;font-size:0.8rem;">0</span>
       </button>
+
+      <!-- Bouton compte (visiteur / connecté) -->
+      <div class="compte-dropdown">
+        <button id="compte-btn" onclick="toggleCompteMenu()">
+          <span id="compte-btn-content">👤 Connexion</span>
+        </button>
+        <div class="compte-menu" id="compte-menu">
+          <button class="compte-menu-item" onclick="showPage('payment', null); closeCompteMenu()">🛒 Mon panier</button>
+          <button class="compte-menu-item" onclick="voirCommandes(); closeCompteMenu()">📦 Mes commandes</button>
+          <div class="compte-menu-divider"></div>
+          <button class="compte-menu-item danger" onclick="doLogout()">🚪 Se déconnecter</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -93,18 +529,9 @@
     </div>
 
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-number">200+</div>
-        <div class="stat-label">Produits</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">15K+</div>
-        <div class="stat-label">Clients</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-number">4.9★</div>
-        <div class="stat-label">Note moyenne</div>
-      </div>
+      <div class="stat-card"><div class="stat-number">200+</div><div class="stat-label">Produits</div></div>
+      <div class="stat-card"><div class="stat-number">15K+</div><div class="stat-label">Clients</div></div>
+      <div class="stat-card"><div class="stat-number">4.9★</div><div class="stat-label">Note moyenne</div></div>
     </div>
 
     <div class="section-header">
@@ -113,91 +540,74 @@
     </div>
 
     <div class="products-grid">
-      <div class="product-card" onclick="addToCart('VOIDX Pro 8000', '59.90€')">
-        <div class="product-img">
-          💨
-          <span class="product-badge badge-new">NEW</span>
-        </div>
+      <div class="product-card" onclick="addToCart('Hyperjoy - Blueberry Ice', '12 000 XOF', 1)">
+        <div class="product-img">🍇<span class="product-badge badge-new">NEW</span></div>
         <div class="product-info">
-          <div class="product-name">VOIDX Pro 8000</div>
+          <div class="product-name">Hyperjoy - Blueberry ice</div>
           <div class="product-desc">Kit complet 40W, 8000 bouffées, batterie 1800mAh</div>
           <div class="product-footer">
-            <div class="product-price">59,90 €</div>
-            <button class="add-btn" onclick="event.stopPropagation();addToCart('VOIDX Pro 8000','59.90€')">+</button>
+            <div class="product-price">12 000 XOF</div>
+            <button class="add-btn" onclick="event.stopPropagation();addToCart('Hyperjoy - Blueberry Ice','12 000 XOF',1)">+</button>
           </div>
         </div>
       </div>
 
-      <div class="product-card" onclick="addToCart('NebulaPod X2', '34.90€')">
-        <div class="product-img">
-          🌬️
-          <span class="product-badge badge-hot">BEST</span>
-        </div>
+      <div class="product-card" onclick="addToCart('Cool Bar 9k', '9 000 XOF', 2)">
+        <div class="product-img">🌬️<span class="product-badge badge-hot">BEST</span></div>
         <div class="product-info">
-          <div class="product-name">NebulaPod X2</div>
-          <div class="product-desc">Pod system 18W rechargeable USB-C, design minimaliste</div>
+          <div class="product-name">Cool Bar 9k</div>
+          <div class="product-desc">Peach Ice - Cool Mint</div>
           <div class="product-footer">
-            <div class="product-price">34,90 €</div>
-            <button class="add-btn" onclick="event.stopPropagation();addToCart('NebulaPod X2','34.90€')">+</button>
+            <div class="product-price">9 000 XOF</div>
+            <button class="add-btn" onclick="event.stopPropagation();addToCart('Cool Bar 9k','9 000 XOF',2)">+</button>
           </div>
         </div>
       </div>
 
-      <div class="product-card" onclick="addToCart('E-Liquid Mango Ice', '12.90€')">
-        <div class="product-img">
-          🥭
-          <span class="product-badge badge-sale">-20%</span>
-        </div>
+      <div class="product-card" onclick="addToCart('E-Liquid Mango Ice', '5 000 XOF', 3)">
+        <div class="product-img">🥭<span class="product-badge badge-sale">-20%</span></div>
         <div class="product-info">
           <div class="product-name">E-Liquid Mango Ice</div>
           <div class="product-desc">50ml, 0mg/3mg/6mg, base 70/30, fruité & frais</div>
           <div class="product-footer">
-            <div class="product-price"><span class="old">16,90€</span>12,90 €</div>
-            <button class="add-btn" onclick="event.stopPropagation();addToCart('E-Liquid Mango Ice','12.90€')">+</button>
+            <div class="product-price"><span class="old">8 000 XOF</span>5 000 XOF</div>
+            <button class="add-btn" onclick="event.stopPropagation();addToCart('E-Liquid Mango Ice','5 000 XOF',3)">+</button>
           </div>
         </div>
       </div>
 
-      <div class="product-card" onclick="addToCart('ArcMod 200W', '89.90€')">
-        <div class="product-img">
-          ⚡
-          <span class="product-badge badge-new">NEW</span>
-        </div>
+      <div class="product-card" onclick="addToCart('ArcMod 200W', '10 000 XOF', 4)">
+        <div class="product-img">⚡<span class="product-badge badge-new">NEW</span></div>
         <div class="product-info">
           <div class="product-name">ArcMod 200W</div>
           <div class="product-desc">Box mod haute puissance, écran OLED, dual 18650</div>
           <div class="product-footer">
-            <div class="product-price">89,90 €</div>
-            <button class="add-btn" onclick="event.stopPropagation();addToCart('ArcMod 200W','89.90€')">+</button>
+            <div class="product-price">10 000 XOF</div>
+            <button class="add-btn" onclick="event.stopPropagation();addToCart('ArcMod 200W','10 000 XOF',4)">+</button>
           </div>
         </div>
       </div>
 
-      <div class="product-card" onclick="addToCart('Kit Résistances RBA', '19.90€')">
-        <div class="product-img">
-          🔧
-        </div>
+      <div class="product-card" onclick="addToCart('Kit Résistances RBA', '10 000 XOF', 5)">
+        <div class="product-img">🔧</div>
         <div class="product-info">
           <div class="product-name">Kit Résistances RBA</div>
           <div class="product-desc">Pack 10 résistances mesh 0.15Ω — 0.8Ω, toutes marques</div>
           <div class="product-footer">
-            <div class="product-price">19,90 €</div>
-            <button class="add-btn" onclick="event.stopPropagation();addToCart('Kit Résistances RBA','19.90€')">+</button>
+            <div class="product-price">10 000 XOF</div>
+            <button class="add-btn" onclick="event.stopPropagation();addToCart('Kit Résistances RBA','10 000 XOF',5)">+</button>
           </div>
         </div>
       </div>
 
-      <div class="product-card" onclick="addToCart('Sels de Nicotine Berry', '15.90€')">
-        <div class="product-img">
-          🫐
-          <span class="product-badge badge-hot">TOP</span>
-        </div>
+      <div class="product-card" onclick="addToCart('Nic Salt Berry Burst', '5 000 XOF', 6)">
+        <div class="product-img">✨<span class="product-badge badge-hot">TOP</span></div>
         <div class="product-info">
           <div class="product-name">Nic Salt Berry Burst</div>
           <div class="product-desc">Sels de nicotine 10ml, 20mg, saveur fruits rouges</div>
           <div class="product-footer">
-            <div class="product-price">15,90 €</div>
-            <button class="add-btn" onclick="event.stopPropagation();addToCart('Nic Salt Berry Burst','15.90€')">+</button>
+            <div class="product-price">5 000 XOF</div>
+            <button class="add-btn" onclick="event.stopPropagation();addToCart('Nic Salt Berry Burst','5 000 XOF',6)">+</button>
           </div>
         </div>
       </div>
@@ -210,63 +620,20 @@
       <h2>ADRESSE & <span>HORAIRES</span></h2>
       <p>Retrouvez-nous dans nos boutiques ou commandez en ligne</p>
     </div>
-
     <div class="address-grid">
       <div class="info-card">
         <h3>📍 Boutique Principale</h3>
-        <div class="info-row">
-          <div class="info-icon">🏢</div>
-          <div>
-            <strong>SHiesty Dakar</strong><br>
-            liberté 6 vers le Auchan
-          </div>
-        </div>
-        <div class="info-row">
-          <div class="info-icon">⏰</div>
-          <div>
-            <strong>Lundi – Vendredi :</strong> 10h – 20h<br>
-            <strong>Samedi :</strong> 10h – 19h<br>
-            <strong>Dimanche :</strong> 12h – 17h
-          </div>
-        </div>
-        <div class="info-row">
-          <div class="info-icon">📞</div>
-          <div>
-            <strong>Téléphone :</strong> +221 77 123 45 67<br>
-            <strong>WhatsApp :</strong> +221 77 123 45 67
-          </div>
-        </div>
+        <div class="info-row"><div class="info-icon">🏢</div><div><strong>SHiesty Dakar</strong><br>liberté 6 vers le Auchan</div></div>
+        <div class="info-row"><div class="info-icon">⏰</div><div><strong>Lundi – Vendredi :</strong> 10h – 20h<br><strong>Samedi :</strong> 10h – 19h<br><strong>Dimanche :</strong> 12h – 17h</div></div>
+        <div class="info-row"><div class="info-icon">📞</div><div><strong>Téléphone :</strong> +221 77 123 45 67<br><strong>WhatsApp :</strong> +221 77 123 45 67</div></div>
       </div>
-
       <div class="info-card">
         <h3>📦 Livraison</h3>
-        <div class="info-row">
-          <div class="info-icon">🚀</div>
-          <div>
-            <strong>Livraison express :</strong> Dakar<br>
-            <strong>Sous régions:</strong> 2–3 jours ouvrés
-          </div>
-        </div>
-        <div class="info-row">
-          <div class="info-icon">💶</div>
-          <div>
-            <strong>Livraison offerte</strong> dès 15000 Francs CFA d'achats<br>
-            
-          </div>
-        </div>
-        <div class="info-row">
-          <div class="info-icon">🔄</div>
-          <div>
-            <strong>Retours :</strong> 14 jours satisfait ou remboursé<br>
-            Produits non ouverts uniquement
-          </div>
-        </div>
+        <div class="info-row"><div class="info-icon">🚀</div><div><strong>Livraison express :</strong> Dakar<br><strong>Sous régions:</strong> 2–3 jours ouvrés</div></div>
+        <div class="info-row"><div class="info-icon">💶</div><div><strong>Livraison offerte</strong> dès 15000 Francs CFA d'achats</div></div>
+        <div class="info-row"><div class="info-icon">🔄</div><div><strong>Retours :</strong> 14 jours satisfait ou remboursé<br>Produits non ouverts uniquement</div></div>
       </div>
-
-      <div class="map-placeholder">
-        <span>🗺️</span>
-        <p>Rue-16 Liberté 6</p>
-      </div>
+      <div class="map-placeholder"><span>🗺️</span><p>Rue-16 Liberté 6</p></div>
     </div>
   </div>
 
@@ -276,84 +643,36 @@
       <h2>INFORMATIONS <span>UTILES</span></h2>
       <p>Tout ce que vous devez savoir sur nos produits et services</p>
     </div>
-
     <div class="info-tabs">
       <button class="tab-btn active" onclick="switchTab('faq', this)">FAQ</button>
       <button class="tab-btn" onclick="switchTab('about', this)">À propos</button>
       <button class="tab-btn" onclick="switchTab('legal', this)">Mentions légales</button>
     </div>
-
     <div id="tab-faq" class="tab-content active">
       <div class="faq-item open">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          Quelle est la différence entre une e-cigarette et un pod ?
-          <span>▼</span>
-        </div>
-        <div class="faq-answer">
-          Un pod est un système compact et discret idéal pour les débutants. Une e-cigarette classique offre plus de puissance et de personnalisation pour les utilisateurs avancés. Nous recommandons le pod pour commencer, puis évoluer vers un kit complet si besoin.
-        </div>
+        <div class="faq-question" onclick="toggleFaq(this)">Quelle est la différence entre une e-cigarette et un pod ?<span>▼</span></div>
+        <div class="faq-answer">Un pod est un système compact et discret idéal pour les débutants. Une e-cigarette classique offre plus de puissance et de personnalisation pour les utilisateurs avancés.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          Comment choisir mon taux de nicotine ?
-          <span>▼</span>
-        </div>
-        <div class="faq-answer">
-          Si vous fumez moins d'un paquet par jour : 3–6mg. Entre 1 et 2 paquets : 6–12mg. Plus d'un paquet : 12–18mg ou sels de nicotine 20mg. N'hésitez pas à nous contacter pour un conseil personnalisé.
-        </div>
+        <div class="faq-question" onclick="toggleFaq(this)">Comment choisir mon taux de nicotine ?<span>▼</span></div>
+        <div class="faq-answer">Moins d'un paquet/jour : 3–6mg. Entre 1 et 2 paquets : 6–12mg. Plus d'un paquet : 12–18mg ou sels de nicotine 20mg.</div>
       </div>
       <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          Puis-je retourner un produit ?
-          <span>▼</span>
-        </div>
-        <div class="faq-answer">
-          Oui, vous avez 14 jours pour retourner un produit non ouvert et non utilisé. Les e-liquides ouverts ne sont pas repris pour des raisons d'hygiène. Contactez notre service client pour initier le retour.
-        </div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          Vos produits sont-ils certifiés ?
-          <span>▼</span>
-        </div>
-        <div class="faq-answer">
-          Tous nos produits respectent la directive TPD (Tobacco Products Directive) européenne. Nos e-liquides sont fabriqués en France avec des ingrédients de qualité pharmaceutique, tracés et certifiés.
-        </div>
+        <div class="faq-question" onclick="toggleFaq(this)">Puis-je retourner un produit ?<span>▼</span></div>
+        <div class="faq-answer">Oui, 14 jours pour retourner un produit non ouvert et non utilisé. Les e-liquides ouverts ne sont pas repris pour des raisons d'hygiène.</div>
       </div>
     </div>
-
     <div id="tab-about" class="tab-content">
       <div class="info-card" style="margin-bottom:16px;">
         <h3>🏆 Notre histoire</h3>
-        <div class="info-row">
-          <div class="info-icon">✨</div>
-          <div>Fondée en 2018 à DAKAR, Shiesty est née de la passion de vapoteurs souhaitant offrir des produits de qualité professionnelle. Nous sélectionnons rigoureusement chaque produit de notre catalogue.</div>
-        </div>
-      </div>
-      <div class="info-card">
-        <h3>💡 Notre mission</h3>
-        <div class="info-row">
-          <div class="info-icon">🎯</div>
-          <div>Proposer les meilleures alternatives tabac, accompagner les fumeurs dans leur transition, et contribuer à un monde avec moins de tabac combustible grâce à des technologies modernes et sûres.</div>
-        </div>
+        <div class="info-row"><div class="info-icon">✨</div><div>Fondée en 2018 à DAKAR, Shiesty est née de la passion de vapoteurs souhaitant offrir des produits de qualité professionnelle.</div></div>
       </div>
     </div>
-
     <div id="tab-legal" class="tab-content">
       <div class="info-card">
         <h3>⚖️ Mentions Légales</h3>
-        <div class="info-row">
-          <div class="info-icon">🏛️</div>
-          <div><strong>SHiesty SAS</strong> — Capital social : 50 000€<br><br>Rue Liberté 6, DAKAR</div>
-        </div>
-        <div class="info-row">
-          <div class="info-icon">🔒</div>
-          <div><strong>Données personnelles :</strong> Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Contact DPO : privacy@vapora.fr</div>
-        </div>
-        <div class="info-row">
-          <div class="info-icon">⚠️</div>
-          <div>La vente de produits contenant de la nicotine est <strong>strictement interdite aux mineurs</strong>. La nicotine est une substance addictive. Ces produits ne sont pas recommandés aux non-fumeurs.</div>
-        </div>
+        <div class="info-row"><div class="info-icon">🏛️</div><div><strong>SHiesty SAS</strong> — Rue Liberté 6, DAKAR</div></div>
+        <div class="info-row"><div class="info-icon">⚠️</div><div>La vente de produits contenant de la nicotine est <strong>strictement interdite aux mineurs</strong>.</div></div>
       </div>
     </div>
   </div>
@@ -364,22 +683,14 @@
       <h2>NOUS <span>CONTACTER</span></h2>
       <p>Notre équipe répond sous 24h en semaine</p>
     </div>
-
     <div class="contact-grid">
       <div>
         <div class="info-card">
           <h3>✉️ Envoyez un message</h3>
-          <div class="form-group">
-            <label>Nom complet</label>
-            <input type="text" placeholder="Kotal Kahn">
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" placeholder="barropapy@gmail.com">
-          </div>
-          <div class="form-group">
-            <label>Sujet</label>
-            <select>
+          <div class="form-group"><label>Nom complet</label><input type="text" id="contact-nom" placeholder="Votre nom"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="contact-email" placeholder="votre@email.com"></div>
+          <div class="form-group"><label>Sujet</label>
+            <select id="contact-sujet">
               <option>Commande / Livraison</option>
               <option>Retour / Remboursement</option>
               <option>Conseil produit</option>
@@ -387,65 +698,23 @@
               <option>Autre</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Message</label>
-            <textarea placeholder="Décrivez votre demande en détail..."></textarea>
-          </div>
-          <button class="btn-primary" style="width:100%;justify-content:center;" onclick="sendContact()">
-            Envoyer le message →
-          </button>
+          <div class="form-group"><label>Message</label><textarea id="contact-message" placeholder="Décrivez votre demande..."></textarea></div>
+          <button class="btn-primary" style="width:100%;justify-content:center;" onclick="sendContact()">Envoyer le message →</button>
         </div>
       </div>
-
       <div>
         <div class="contact-channels">
           <div class="channel-card">
             <div class="channel-icon" style="background:rgba(37,211,102,0.1);color:#25d366;font-size:1.6rem;">💬</div>
-            <div class="channel-info">
-              <h4>WhatsApp</h4>
-              <p>Réponse rapide • 9h–20h</p>
-            </div>
-            <span style="margin-left:auto;color:var(--text-muted);font-size:0.8rem;">→</span>
+            <div class="channel-info"><h4>WhatsApp</h4><p>Réponse rapide • 9h–20h</p></div>
           </div>
           <div class="channel-card">
-            <div class="channel-icon" style="background:rgba(0,229,255,0.1);color:var(--accent);font-size:1.6rem;">📞</div>
-            <div class="channel-info">
-              <h4>Téléphone</h4>
-              <p>+221 77 123 45 67 • Lun–Ven 10h–18h</p>
-            </div>
-            <span style="margin-left:auto;color:var(--text-muted);font-size:0.8rem;">→</span>
+            <div class="channel-icon" style="background:rgba(0,229,255,0.1);color:#00e5ff;font-size:1.6rem;">📞</div>
+            <div class="channel-info"><h4>Téléphone</h4><p>+221 77 123 45 67 • Lun–Ven 10h–18h</p></div>
           </div>
           <div class="channel-card">
             <div class="channel-icon" style="background:rgba(124,58,237,0.1);color:#a78bfa;font-size:1.6rem;">📧</div>
-            <div class="channel-info">
-              <h4>Email</h4>
-              <p>contact@vapora.fr</p>
-            </div>
-            <span style="margin-left:auto;color:var(--text-muted);font-size:0.8rem;">→</span>
-          </div>
-          <div class="channel-card">
-            <div class="channel-icon" style="background:rgba(255,107,53,0.1);color:var(--accent3);font-size:1.6rem;">📸</div>
-            <div class="channel-info">
-              <h4>Instagram</h4>
-              <p>@vapora_official • DM ouvert</p>
-            </div>
-            <span style="margin-left:auto;color:var(--text-muted);font-size:0.8rem;">→</span>
-          </div>
-
-          <div class="info-card" style="margin-top:4px;">
-            <h3>⏱️ Délais de réponse</h3>
-            <div class="info-row" style="padding:8px 0;">
-              <div class="info-icon" style="width:28px;height:28px;font-size:0.9rem;">💬</div>
-              <div style="font-size:0.82rem;">WhatsApp : quelques minutes</div>
-            </div>
-            <div class="info-row" style="padding:8px 0;">
-              <div class="info-icon" style="width:28px;height:28px;font-size:0.9rem;">📧</div>
-              <div style="font-size:0.82rem;">Email/Formulaire : sous 24h</div>
-            </div>
-            <div class="info-row" style="padding:8px 0;border:none;">
-              <div class="info-icon" style="width:28px;height:28px;font-size:0.9rem;">📞</div>
-              <div style="font-size:0.82rem;">Téléphone : immédiat en heures ouvrées</div>
-            </div>
+            <div class="channel-info"><h4>Email</h4><p>contact@shiesty.sn</p></div>
           </div>
         </div>
       </div>
@@ -460,41 +729,18 @@
     </div>
 
     <div class="payment-layout">
-      <!-- Left: Cart Summary -->
       <div>
         <div class="cart-summary">
           <h3>🛒 Récapitulatif</h3>
-
-          <div class="cart-item">
-            <div class="cart-item-img">💨</div>
-            <div>
-              <div class="cart-item-name">VOIDX Pro 8000</div>
-              <div class="cart-item-sub">Noir mat • Qté : 1</div>
+          <div id="cart-items-list">
+            <!-- Rempli dynamiquement par JS -->
+            <div style="text-align:center;padding:24px;color:#6b6b80;font-family:'Space Mono',monospace;font-size:0.8rem;">
+              Votre panier est vide
             </div>
-            <div class="cart-item-price">59,90 €</div>
           </div>
 
-          <div class="cart-item">
-            <div class="cart-item-img">🥭</div>
-            <div>
-              <div class="cart-item-name">E-Liquid Mango Ice</div>
-              <div class="cart-item-sub">50ml / 3mg • Qté : 2</div>
-            </div>
-            <div class="cart-item-price">25,80 €</div>
-          </div>
-
-          <div class="cart-item">
-            <div class="cart-item-img">🔧</div>
-            <div>
-              <div class="cart-item-name">Kit Résistances RBA</div>
-              <div class="cart-item-sub">Pack 10 • Qté : 1</div>
-            </div>
-            <div class="cart-item-price">19,90 €</div>
-          </div>
-
-          <!-- Promo Code -->
           <div style="margin-top:18px;">
-            <div style="font-size:0.78rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;font-family:'Space Mono',monospace;">Code promo</div>
+            <div style="font-size:0.78rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#6b6b80;margin-bottom:8px;font-family:'Space Mono',monospace;">Code promo</div>
             <div class="promo-box">
               <input class="promo-input" id="promo-input" type="text" placeholder="Entrez votre code...">
               <button class="promo-apply" onclick="applyPromo()">Appliquer</button>
@@ -503,96 +749,72 @@
           </div>
 
           <div class="cart-totals">
-            <div class="total-row"><span>Sous-total</span><span>105,60 €</span></div>
+            <div class="total-row"><span>Sous-total</span><span id="sous-total-display">0 XOF</span></div>
             <div class="total-row"><span>Livraison</span><span style="color:#4ade80;">Offerte</span></div>
             <div class="total-row" id="discount-row" style="display:none;"><span>Réduction</span><span id="discount-val" style="color:#4ade80;"></span></div>
-            <div class="total-row grand"><span>TOTAL TTC</span><span id="total-display">105,60 €</span></div>
+            <div class="total-row grand"><span>TOTAL TTC</span><span id="total-display">0 XOF</span></div>
           </div>
         </div>
       </div>
 
-      <!-- Right: Payment Form -->
       <div>
         <div class="payment-form-box">
           <h3>💳 Paiement</h3>
 
-          <div class="payment-methods">
-            <div class="pay-method active" onclick="selectMethod(this, 'card')">
-              <span>💳</span>
-              <span>Carte bancaire</span>
-            </div>
-            <div class="pay-method" onclick="selectMethod(this, 'paypal')">
-              <span>🅿️</span>
-              <span>PayPal</span>
-            </div>
-            <div class="pay-method" onclick="selectMethod(this, 'apple')">
-              <span>🍎</span>
-              <span>Apple Pay</span>
-            </div>
+          <!-- Alerte si non connecté -->
+          <div id="pay-login-alert" style="background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.2);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:0.83rem;color:#ff6b35;display:none;">
+            🔒 <strong>Connexion requise</strong> pour passer une commande.
+            <button onclick="openAuth()" style="background:none;border:none;color:#00e5ff;cursor:pointer;text-decoration:underline;font-size:0.83rem;margin-left:6px;">Se connecter →</button>
           </div>
 
-          <!-- Card Preview -->
+          <div class="payment-methods">
+            <div class="pay-method active" onclick="selectMethod(this, 'card')"><span>💳</span><span>Carte</span></div>
+            <div class="pay-method" onclick="selectMethod(this, 'paypal')"><span>🅿️</span><span>PayPal</span></div>
+            <div class="pay-method" onclick="selectMethod(this, 'apple')"><span>🍎</span><span>Apple Pay</span></div>
+            <div class="pay-method" onclick="selectMethod(this, 'wave')"><span>🐧</span><span>WAVE</span></div>
+          </div>
+
           <div class="card-display" id="card-preview">
             <div class="card-chip"></div>
             <div class="card-network" id="card-network">💳</div>
             <div class="card-number-display" id="card-num-display">•••• •••• •••• ••••</div>
             <div class="card-meta">
-              <div>
-                <div style="margin-bottom:3px;font-size:0.62rem;opacity:0.7">TITULAIRE</div>
-                <div id="card-name-display">VOTRE NOM</div>
-              </div>
-              <div>
-                <div style="margin-bottom:3px;font-size:0.62rem;opacity:0.7">EXPIRE</div>
-                <div id="card-exp-display">MM/AA</div>
-              </div>
+              <div><div style="margin-bottom:3px;font-size:0.62rem;opacity:0.7">TITULAIRE</div><div id="card-name-display">VOTRE NOM</div></div>
+              <div><div style="margin-bottom:3px;font-size:0.62rem;opacity:0.7">EXPIRE</div><div id="card-exp-display">MM/AA</div></div>
             </div>
           </div>
 
           <div id="card-form">
-            <div class="form-group">
-              <label>Titulaire de la carte</label>
-              <input type="text" id="card-name" placeholder="Jean DUPONT" maxlength="26"
-                oninput="document.getElementById('card-name-display').textContent = this.value.toUpperCase() || 'VOTRE NOM'">
-            </div>
-            <div class="form-group">
-              <label>Numéro de carte</label>
-              <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19"
-                oninput="formatCardNumber(this)" style="font-family:'Space Mono',monospace;letter-spacing:2px;">
-            </div>
+            <div class="form-group"><label>Titulaire</label><input type="text" id="card-name" placeholder="Jean DUPONT" maxlength="26" oninput="document.getElementById('card-name-display').textContent=this.value.toUpperCase()||'VOTRE NOM'"></div>
+            <div class="form-group"><label>Numéro de carte</label><input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCardNumber(this)" style="font-family:'Space Mono',monospace;letter-spacing:2px;"></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-              <div class="form-group">
-                <label>Date d'expiration</label>
-                <input type="text" id="card-exp" placeholder="MM/AA" maxlength="5"
-                  oninput="formatExpiry(this)" style="font-family:'Space Mono',monospace;">
-              </div>
-              <div class="form-group">
-                <label>CVV</label>
-                <input type="text" id="card-cvv" placeholder="•••" maxlength="4"
-                  style="font-family:'Space Mono',monospace;" oninput="this.value=this.value.replace(/\D/g,'')">
-              </div>
+              <div class="form-group"><label>Expiration</label><input type="text" id="card-exp" placeholder="MM/AA" maxlength="5" oninput="formatExpiry(this)" style="font-family:'Space Mono',monospace;"></div>
+              <div class="form-group"><label>CVV</label><input type="text" id="card-cvv" placeholder="•••" maxlength="4" style="font-family:'Space Mono',monospace;" oninput="this.value=this.value.replace(/\D/g,'')"></div>
             </div>
           </div>
 
           <div id="paypal-form" style="display:none;">
-            <div class="form-group">
-              <label>Email PayPal</label>
-              <input type="email" placeholder="votremail@paypal.com">
-            </div>
-            <div style="background:rgba(0,112,243,0.08);border:1px solid rgba(0,112,243,0.2);border-radius:10px;padding:14px 16px;font-size:0.83rem;color:#60a5fa;">
-              🔒 Vous serez redirigé vers PayPal pour finaliser le paiement en toute sécurité.
-            </div>
+            <div class="form-group"><label>Email PayPal</label><input type="email" placeholder="votremail@paypal.com"></div>
           </div>
 
           <div id="apple-form" style="display:none;">
             <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
               <div style="font-size:2.5rem;margin-bottom:8px;">🍎</div>
               <div style="font-weight:700;margin-bottom:6px;">Apple Pay</div>
-              <div style="font-size:0.82rem;color:var(--text-muted);">Appuyez sur le bouton ci-dessous pour payer avec Touch ID ou Face ID</div>
+              <div style="font-size:0.82rem;color:var(--text-muted);">Payez avec Touch ID ou Face ID</div>
+            </div>
+          </div>
+
+          <div id="wave-form" style="display:none;">
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
+              <div style="font-size:2.5rem;margin-bottom:8px;">🐧</div>
+              <div style="font-weight:700;margin-bottom:6px;">Wave</div>
+              <div style="font-size:0.82rem;color:var(--text-muted);">Connectez-vous à votre compte Wave</div>
             </div>
           </div>
 
           <button class="btn-primary" style="width:100%;margin-top:20px;font-size:0.95rem;padding:16px;" onclick="processPayment()">
-            🔒 Payer <span id="pay-amount">105,60 €</span>
+            🔒 Payer <span id="pay-amount">0 XOF</span>
           </button>
 
           <div class="secure-badge">
@@ -613,6 +835,7 @@
     <div class="notification-sub" id="notif-sub">Voir le panier</div>
   </div>
 </div>
-</body>
 
+<script src="javascript.js"></script>
+</body>
 </html>
